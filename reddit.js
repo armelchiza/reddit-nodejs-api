@@ -1,4 +1,5 @@
 var bcrypt = require('bcrypt-as-promised');
+var mysql = require('promise-mysql');
 var HASH_ROUNDS = 10;
 
 class RedditAPI {
@@ -32,15 +33,19 @@ class RedditAPI {
     }
 
     createPost(post) {
+      if (post.subredditId == null){
+        throw new Error('Subreddit section has to be provided');
+      } else {
         return this.conn.query(
             `
-            INSERT INTO posts (userId, title, url, createdAt, updatedAt)
-            VALUES (?, ?, ?, NOW(). NOW())`,
-            [post.userId, post.title, post.url]
+            INSERT INTO posts (userId, title, url, createdAt, updatedAt, subredditId)
+            VALUES (?, ?, ?, NOW(), NOW(), ?)`,
+            [post.userId, post.title, post.url, post.subredditId]
         )
             .then(result => {
                 return result.insertId;
             });
+      }
     }
 
     getAllPosts() {
@@ -55,12 +60,92 @@ class RedditAPI {
          */
         return this.conn.query(
             `
-            SELECT id, title, url, userId, createdAt, updatedAt
-            FROM posts
-            ORDER BY createdAt DESC
-            LIMIT 25`
-        );
+            SELECT posts.id,
+              posts.title,
+              posts.url,
+              posts.id,
+              posts.createdAt AS postCA,
+              posts.updatedAt AS postUA,
+              posts.userId,
+              users.username,
+              users.createdAt AS userCA,
+              users.updatedAt AS userUA,
+              subreddits.name AS subreddit_name,
+              subreddits.description AS subreddit_description,
+              subreddits.createdAt AS subredditCA,
+              subreddits.updatedAt AS subredditUA
+            FROM posts JOIN users ON users.id = posts.userId
+            JOIN subreddits ON posts.subredditID = subreddits.id
+            JOIN votes ON posts.id = votes.postID
+            ORDER BY posts.createdAt DESC
+            LIMIT 25;`
+        ).then(function(rows){
+          //Now that we have voting, we need to add the voteScore of each post by doing an extra
+          // JOIN to the votes table, grouping by postId, and doing a SUM on the voteDirection column.
+          //To make the output more interesting, we need to ORDER the posts by the highest voteScore
+          // first instead of creation time.
+          return rows.map(row =>
+            {
+              return {
+              id: row.id ,
+              title: row.title,
+              url: row.url,
+              createdAt: row.postCA,
+              updatedAt: row.postUA,
+              subredditID: row.subredditID,
+              user: {
+                id: row.userId,
+                username: row.username,
+                createdAt: row.userCA,
+                updatedAt: row.userUA
+              },
+              subreddit_name : row.subreddit_name,
+              subreddit_description : row.subreddit_description,
+              subredditCA : row.subredditCA,
+              subredditUA : row.subredditUA
+            } // object
+            // console.log("hello");
+          } // => function
+
+        ); // closing the map
+      }); // closing the then
     }
-}
+    createSubreddit(subreddit){
+      // function takes in name and description of a subreddit object
+      //this.conn.query
+
+      var subname = subreddit.name;
+      var subdescription = subreddit.description;
+
+      return this.conn.query(`
+        INSERT INTO reddit.subreddits
+          (name, description, createdAt, updatedAt)
+          VALUES
+          (?, ?, NOW(), NOW());`,
+          [subname, subdescription])
+        .then( () => {
+          return this.conn.query(`SELECT id FROM reddit.subreddits WHERE max(id);`);
+        }).catch(error => {
+            // Special error handling for duplicate entry
+            if (error.code === 'ER_DUP_ENTRY') {
+                throw new Error('A user with this username already exists');
+            }
+            else {
+                throw error;
+            }
+        });
+    }
+    getAllSubreddits() {
+
+        return this.conn.query(`SELECT * FROM subreddits ORDER BY subreddits.createdAt DESC;`);
+    }
+
+    createVote(vote){ // postId, userId, voteDirection
+      // console.log('hello');
+      return this.conn.query(`INSERT INTO votes SET postId=?,
+        userId=?, voteDirection=? ON DUPLICATE KEY UPDATE voteDirection=?`,
+      [vote.postId, vote.userId, vote.voteDirection, vote.voteDirection]);
+    }
+  }
 
 module.exports = RedditAPI;

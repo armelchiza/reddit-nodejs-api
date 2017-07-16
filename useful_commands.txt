@@ -1,0 +1,14 @@
+npm install mysql-promise
+
+-- installs mysql module
+
+
+npm install bcrypt-as-promised
+
+-- installs bcrypt useful during the stage of setting a password;
+
+
+npm install promise-mysql
+
+-- to start using the demo.js
+
