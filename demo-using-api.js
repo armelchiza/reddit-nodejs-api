@@ -18,7 +18,7 @@ var myReddit = new RedditAPI(connection);
 // We call this function to create a new user to test our API
 // The function will return the newly created user's ID in the callback
 myReddit.createUser({
-    username: 'PM_ME_CUTES5',
+    username: 'PM_ME_CUTES23',
     password: 'abc123'
 })
     .then(newUserId => {
@@ -35,6 +35,7 @@ myReddit.createUser({
     })
     .then(newPostId => {
         // If we reach that part of the code, then we have a new post. We can print the ID
+        console.log;
         console.log('New post created! ID=' + newPostId);
         connection.end();
     })
@@ -43,4 +44,6 @@ myReddit.createUser({
         console.log(error.stack);
     });
 
-myReddit.createVote({postId: 1, userId: 1, voteDirection:1}).then(console.log('yay')); // tester getAllSubs
+// myReddit.createVote({postId: 1, userId: 1, voteDirection:1});
+// console.log('vote created');
+// myReddit.getAllPosts();

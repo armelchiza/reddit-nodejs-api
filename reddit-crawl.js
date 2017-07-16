@@ -3,38 +3,53 @@ var mysql = require('promise-mysql');
 var RedditAPI = require('./reddit');
 
 function getSubreddits() {
-    return request(/* fill in the URL, it's always the same */)
+    return request('https://www.reddit.com/.json')
         .then(response => {
             // Parse response as JSON and store in variable called result
-            var response; // continue this line
-
+            var response = JSON.parse(response); // continue this line
             // Use .map to return a list of subreddit names (strings) only
-            return response.data.children.map(/* write a function */)
+            return response.data.children.map(function(da_post){
+              return {
+                title : da_post.data.title,
+                title : da_post.data.url,
+                title : da_post.data.name.author
+              }
+            })
         });
 }
 
+getSubreddits();
+
 function getPostsForSubreddit(subredditName) {
-    return request(/* fill in the URL, it will be based on subredditName */)
+    return request('https://www.reddit.com/r/'+subredditName+'.json?limit=50')
         .then(
             response => {
                 // Parse the response as JSON and store in variable called result
-                var response; // continue this line
-
-
+                var response = JSON.parse(response); // continue this line
                 return response.data.children
-                    .filter(/* write a function */) // Use .filter to remove self-posts
-                    .map(/* write a function */) // Use .map to return title/url/user objects only
-
+                    .filter(function(a_post){
+                      // console.log(a_post.data.author);
+                      return !a_post.data.is_self;
+                    }) // Use .filter to remove self-posts
+                    .map(function(da_post){
+                      return {
+                        title : da_post.data.title,
+                        title : da_post.data.url,
+                        title : da_post.data.name.author
+                      }
+                    }) // Use .map to return title/url/user objects only
             }
         );
 }
+
+// console.log(getPostsForSubreddit('montreal'));
 
 function crawl() {
     // create a connection to the DB
     var connection = mysql.createPool({
         host     : 'localhost',
         user     : 'root',
-        password : '',
+        password : 'root',
         database: 'reddit',
         connectionLimit: 10
     });
@@ -98,3 +113,4 @@ function crawl() {
             });
         });
 }
+crawl();

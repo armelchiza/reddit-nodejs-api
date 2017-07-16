@@ -44,8 +44,8 @@ CREATE TABLE `reddit`.`votes` (
   userId INT,
   postId INT,
   voteDirection TINYINT,
-  createdAt DATETIME NOT NULL,
-  updatedAt DATETIME NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (userId, postId), -- this is called a composite key because it spans multiple columns. the combination userId/postId must be unique and uniquely identifies each row of this table.
   KEY userId (userId), -- this is required for the foreign key
   KEY postId (postId), -- this is required for the foreign key
@@ -77,12 +77,17 @@ INSERT INTO reddit.posts
   ('cool thangs', 'google.com', 2, '2017-07-10 08:15:00', '2017-07-11 08:15:00', 1),
   ('cooler thangs', 'google.ca', 1, '2017-08-10 08:15:00', '2017-08-11 08:15:00', 2)
 ;
-
-
+INSERT INTO reddit.votes
+  (userId, postId, voteDirection)
+  VALUES
+  (1, 1, 0),
+  (2, 2, 0)
+;
 
 -- data appears
 SELECT * FROM reddit.users;
 SELECT * FROM reddit.posts;
 SELECT * FROM reddit.subreddits;
+SELECT * FROM reddit.votes;
 -- UPDATE decodemtl_addressbook.Entry SET lastName='Perry' WHERE lastName='Perrier';
 -- TRUNCATE decodemtl_addressbook.Entry;

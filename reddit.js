@@ -39,7 +39,8 @@ class RedditAPI {
         return this.conn.query(
             `
             INSERT INTO posts (userId, title, url, createdAt, updatedAt, subredditId)
-            VALUES (?, ?, ?, NOW(), NOW(), ?)`,
+            VALUES (?, ?, ?, NOW(), NOW(), ?);
+            `,
             [post.userId, post.title, post.url, post.subredditId]
         )
             .then(result => {
@@ -73,17 +74,19 @@ class RedditAPI {
               subreddits.name AS subreddit_name,
               subreddits.description AS subreddit_description,
               subreddits.createdAt AS subredditCA,
-              subreddits.updatedAt AS subredditUA
+              subreddits.updatedAt AS subredditUA,
+              SUM(voteDirection) AS votescasted
             FROM posts JOIN users ON users.id = posts.userId
             JOIN subreddits ON posts.subredditID = subreddits.id
-            JOIN votes ON posts.id = votes.postID
-            ORDER BY posts.createdAt DESC
+            JOIN votes ON votes.postId = posts.id GROUP BY votes.postId
+            ORDER BY votescasted DESC, posts.createdAt DESC
             LIMIT 25;`
         ).then(function(rows){
           //Now that we have voting, we need to add the voteScore of each post by doing an extra
           // JOIN to the votes table, grouping by postId, and doing a SUM on the voteDirection column.
           //To make the output more interesting, we need to ORDER the posts by the highest voteScore
           // first instead of creation time.
+          console.log(rows);
           return rows.map(row =>
             {
               return {
@@ -102,7 +105,8 @@ class RedditAPI {
               subreddit_name : row.subreddit_name,
               subreddit_description : row.subreddit_description,
               subredditCA : row.subredditCA,
-              subredditUA : row.subredditUA
+              subredditUA : row.subredditUA,
+              // votes : row.votescasted
             } // object
             // console.log("hello");
           } // => function
