@@ -9,16 +9,10 @@ function getSubreddits() {
             var response = JSON.parse(response); // continue this line
             // Use .map to return a list of subreddit names (strings) only
             return response.data.children.map(function(da_post){
-              return {
-                title : da_post.data.title,
-                title : da_post.data.url,
-                title : da_post.data.name.author
-              }
+              return da_post.data.subreddit;
             })
         });
 }
-
-getSubreddits();
 
 function getPostsForSubreddit(subredditName) {
     return request('https://www.reddit.com/r/'+subredditName+'.json?limit=50')
@@ -28,21 +22,20 @@ function getPostsForSubreddit(subredditName) {
                 var response = JSON.parse(response); // continue this line
                 return response.data.children
                     .filter(function(a_post){
-                      // console.log(a_post.data.author);
                       return !a_post.data.is_self;
                     }) // Use .filter to remove self-posts
                     .map(function(da_post){
                       return {
                         title : da_post.data.title,
-                        title : da_post.data.url,
-                        title : da_post.data.name.author
+                        url : da_post.data.url,
+                        user : da_post.data.name.author
                       }
                     }) // Use .map to return title/url/user objects only
             }
         );
 }
 
-// console.log(getPostsForSubreddit('montreal'));
+
 
 function crawl() {
     // create a connection to the DB
@@ -54,9 +47,10 @@ function crawl() {
         connectionLimit: 10
     });
 
+
     // create a RedditAPI object. we will use it to insert new data
     var myReddit = new RedditAPI(connection);
-
+  console.log('2');
     // This object will be used as a dictionary from usernames to user IDs
     var users = {};
 
@@ -78,13 +72,16 @@ function crawl() {
         .then(subredditNames => {
             subredditNames.forEach(subredditName => {
                 var subId;
+                console.log(subredditName);
                 myReddit.createSubreddit({name: subredditName})
                     .then(subredditId => {
+                        console.log('3');
                         subId = subredditId;
                         return getPostsForSubreddit(subredditName)
                     })
                     .then(posts => {
                         posts.forEach(post => {
+                            console.log('4');
                             var userIdPromise;
                             if (users[post.user]) {
                                 userIdPromise = Promise.resolve(users[post.user]);

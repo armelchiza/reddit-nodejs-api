@@ -110,7 +110,6 @@ class RedditAPI {
             } // object
             // console.log("hello");
           } // => function
-
         ); // closing the map
       }); // closing the then
     }
@@ -127,9 +126,7 @@ class RedditAPI {
           VALUES
           (?, ?, NOW(), NOW());`,
           [subname, subdescription])
-        .then( () => {
-          return this.conn.query(`SELECT id FROM reddit.subreddits WHERE max(id);`);
-        }).catch(error => {
+        .catch(error => {
             // Special error handling for duplicate entry
             if (error.code === 'ER_DUP_ENTRY') {
                 throw new Error('A user with this username already exists');

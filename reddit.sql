@@ -34,7 +34,7 @@ CREATE TABLE reddit.posts (
 DROP TABLE IF EXISTS `reddit`.`subreddits` ;
 CREATE TABLE reddit.subreddits (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(30) UNIQUE NOT NULL,
+  name VARCHAR(50) UNIQUE NOT NULL,
   description VARCHAR(200) DEFAULT NULL,
   createdAt DATETIME NOT NULL,
   updatedAt DATETIME NOT NULL
